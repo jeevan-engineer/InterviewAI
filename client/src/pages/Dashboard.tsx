@@ -1,16 +1,38 @@
-function Dashboard() {
-  return (
-    <div style={{ padding: "40px" }}>
-      <h1>Welcome to InterviewAI🚀</h1>
+import { useEffect, useState } from "react";
 
-      <ul>
-        <li>Practice Interviews</li>
-        <li>Resume Analyzer</li>
-        <li>Interview History</li>
-        <li>Profile</li>
-      </ul>
+const Dashboard = () => {
+  console.log("Dashboard Rendered");
+
+  const [message, setMessage] = useState("");
+  const [count, setCount] = useState(0);
+
+  useEffect(() => {
+    console.log("useEffect Ran");
+
+    fetch("http://localhost:8000/api/message")
+      .then((response) => response.json())
+      .then((data) => {
+        console.log("Backend Called");
+        setMessage(data.message);
+      })
+      .catch((error) => {
+        console.error(error);
+      });
+  }, []);
+
+  return (
+    <div>
+      <h1>Dashboard</h1>
+
+      <h2>{message}</h2>
+
+      <h3>Count: {count}</h3>
+
+      <button onClick={() => setCount(count + 1)}>
+        Increase
+      </button>
     </div>
   );
-}
+};
 
 export default Dashboard;
