@@ -1,4 +1,63 @@
+
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+const API_URL = "http://localhost:8000";
+interface LoginResponse {
+  success: boolean;
+  message: string;
+}
 function Login() {
+  const [email, setEmail] = useState("");
+const [password, setPassword] = useState("");
+
+const [loading, setLoading] = useState(false);
+const [error, setError] = useState("");
+
+const navigate = useNavigate();
+  const handleLogin = async (
+  e: React.FormEvent<HTMLFormElement>
+): Promise<void> => {
+  e.preventDefault();
+
+  setError("");
+
+  if (!email || !password) {
+    setError("Email and password are required.");
+    return;
+  }
+
+  setLoading(true);
+
+  try {
+    const response = await fetch(`${API_URL}/login`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        email,
+        password,
+      }),
+    });
+
+    const data: LoginResponse = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.message);
+    }
+
+    navigate("/dashboard");
+  } catch (err) {
+    if (err instanceof Error) {
+      setError(err.message);
+    } else {
+      setError("Something went wrong.");
+    }
+  } finally {
+    setLoading(false);
+  }
+};
+
   return (
     <div
       style={{
@@ -19,37 +78,50 @@ function Login() {
         }}
       >
         <h1 style={{ textAlign: "center" }}>InterviewAI</h1>
-
+        <form onSubmit={handleLogin}>
         <input
-          type="email"
-          placeholder="Email"
-          style={{
-            width: "100%",
-            padding: "10px",
-            marginTop: "20px",
-            marginBottom: "15px",
-          }}
-        />
+  type="email"
+  placeholder="Email"
+  value={email}
+  onChange={(e) => setEmail(e.target.value)}
+  style={{
+    width: "100%",
+    padding: "10px",
+    marginTop: "20px",
+    marginBottom: "15px",
+  }}
+/>
 
-        <input
-          type="password"
-          placeholder="Password"
-          style={{
-            width: "100%",
-            padding: "10px",
-            marginBottom: "20px",
-          }}
-        />
+<input
+  type="password"
+  placeholder="Password"
+  value={password}
+  onChange={(e) => setPassword(e.target.value)}
+  style={{
+    width: "100%",
+    padding: "10px",
+    marginBottom: "20px",
+  }}
+/>
 
         <button
-          style={{
-            width: "100%",
-            padding: "10px",
-            cursor: "pointer",
-          }}
-        >
-          Login
-        </button>
+  type="submit"
+  disabled={loading}
+  style={{
+    width: "100%",
+    padding: "10px",
+    cursor: loading ? "not-allowed" : "pointer",
+  }}
+>
+  {loading ? "Logging in..." : "Login"}
+</button>
+{error && (
+  <p style={{ color: "red", marginTop: "15px" }}>
+    {error}
+  </p>
+)}
+         
+</form>
       </div>
     </div>
   );
