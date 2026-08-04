@@ -45,7 +45,7 @@ const navigate = useNavigate();
     if (!response.ok) {
       throw new Error(data.message);
     }
-
+    localStorage.setItem("isLoggedIn", "true");
     navigate("/dashboard");
   } catch (err) {
     if (err instanceof Error) {

@@ -1,7 +1,8 @@
 import { Navigate, Outlet } from "react-router-dom";
 
 function ProtectedRoute() {
-  const isLoggedIn = true; // We'll replace this later
+  const isLoggedIn =
+  localStorage.getItem("isLoggedIn") === "true";
 
   return isLoggedIn ? <Outlet /> : <Navigate to="/" replace />;
 }

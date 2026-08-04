@@ -1,11 +1,17 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 const Dashboard = () => {
+  const navigate = useNavigate();
   console.log("Dashboard Rendered");
 
   const [message, setMessage] = useState("");
   const [count, setCount] = useState(0);
+const handleLogout = (): void => {
+  localStorage.removeItem("isLoggedIn");
 
+  navigate("/", { replace: true });
+};
   useEffect(() => {
     console.log("useEffect Ran");
 
@@ -31,6 +37,14 @@ const Dashboard = () => {
       <button onClick={() => setCount(count + 1)}>
         Increase
       </button>
+      <button
+  onClick={handleLogout}
+  style={{
+    marginLeft: "10px",
+  }}
+>
+  Logout
+</button>
     </div>
   );
 };
