@@ -1,9 +1,12 @@
+const authMiddleware = require("./middleware/authMiddleware");
+const jwt = require("jsonwebtoken");
 const express = require("express");
 const cors = require("cors");
 const app = express();
 app.use(express.json());
 app.use(cors());
 const PORT = 8000;
+const JWT_SECRET = "InterviewAISecret123";
 app.get("/", (req, res) => {
   res.send("Welcome to InterviewAI Backend!");
 });
@@ -55,11 +58,27 @@ app.post("/login", (req, res) => {
             message: "Invalid email or password.",
         });
     }
-
+const token = jwt.sign(
+    {
+        email: storedEmail,
+    },
+    JWT_SECRET,
+    {
+        expiresIn: "1h",
+    }
+);
     // Successful login
     res.status(200).json({
         success: true,
         message: "Login successful.",
+        token: token,
+    });
+});
+app.get("/profile",authMiddleware, (req, res) => {
+    res.status(200).json({
+        success: true,
+        message: "Welcome to your profile.",
+        user: req.user,
     });
 });
 app.listen(PORT, () => {

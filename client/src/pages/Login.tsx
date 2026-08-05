@@ -5,6 +5,7 @@ const API_URL = "http://localhost:8000";
 interface LoginResponse {
   success: boolean;
   message: string;
+  token: string;
 }
 function Login() {
   const [email, setEmail] = useState("");
@@ -45,7 +46,7 @@ const navigate = useNavigate();
     if (!response.ok) {
       throw new Error(data.message);
     }
-    localStorage.setItem("isLoggedIn", "true");
+    localStorage.setItem("token", data.token);
     navigate("/dashboard");
   } catch (err) {
     if (err instanceof Error) {
