@@ -1,3 +1,5 @@
+require("dotenv").config();
+console.log(process.env.JWT_SECRET);
 const authMiddleware = require("./middleware/authMiddleware");
 const jwt = require("jsonwebtoken");
 const express = require("express");
@@ -6,7 +8,7 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 const PORT = 8000;
-const JWT_SECRET = "InterviewAISecret123";
+const JWT_SECRET = process.env.JWT_SECRET;
 app.get("/", (req, res) => {
   res.send("Welcome to InterviewAI Backend!");
 });
