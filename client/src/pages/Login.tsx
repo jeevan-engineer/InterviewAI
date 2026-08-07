@@ -1,7 +1,7 @@
-
+import API_BASE_URL from "../api";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-const API_URL = "http://localhost:8000";
+
 interface LoginResponse {
   success: boolean;
   message: string;
@@ -30,7 +30,7 @@ const navigate = useNavigate();
   setLoading(true);
 
   try {
-    const response = await fetch(`${API_URL}/login`, {
+    const response = await fetch(`${API_BASE_URL}/login`, { 
       method: "POST",
       headers: {
         "Content-Type": "application/json",
