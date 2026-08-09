@@ -1,7 +1,8 @@
+import API_BASE_URL from "../api";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 const REDIRECT_DELAY = 2000;
-const API_URL = "http://localhost:8000";
+
 
 interface RegisterResponse {
   message: string;
@@ -20,8 +21,6 @@ const navigate = useNavigate();
 ): Promise<void> => {
   e.preventDefault();
 
-setError("");
-setSuccess("");
 
 // Frontend validation
 if (password !== confirmPassword) {
@@ -30,11 +29,10 @@ if (password !== confirmPassword) {
 }
 
 setLoading(true);
-  setError("");
-  setSuccess("");
+  
 
   try {
-    const response = await fetch(`${API_URL}/register`, {
+    const response = await fetch(`${API_BASE_URL}/register`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
