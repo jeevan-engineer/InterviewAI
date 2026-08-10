@@ -10,7 +10,7 @@ interface LoginResponse {
 function Login() {
   const [email, setEmail] = useState("");
 const [password, setPassword] = useState("");
-
+const [showPassword, setShowPassword] = useState(false);
 const [loading, setLoading] = useState(false);
 const [error, setError] = useState("");
 
@@ -94,7 +94,7 @@ const navigate = useNavigate();
 />
 
 <input
-  type="password"
+  type={showPassword ? "text" : "password"}
   placeholder="Password"
   value={password}
   onChange={(e) => setPassword(e.target.value)}
@@ -104,6 +104,12 @@ const navigate = useNavigate();
     marginBottom: "20px",
   }}
 />
+<button
+  type="button"
+  onClick={() => setShowPassword(!showPassword)}
+>
+  {showPassword ? "Hide" : "Show"}
+</button>
 
         <button
   type="submit"
