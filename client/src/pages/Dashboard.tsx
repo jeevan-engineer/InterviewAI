@@ -64,7 +64,7 @@ if (!response.ok) {
 ) : (
   user && (
     <div>
-      <h2>Welcome, {user.email} 👋</h2>
+      <h2>Welcome, {user.name} 👋</h2>
       <p>Email: {user.email}</p>
     </div>
   )
