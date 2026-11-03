@@ -5,6 +5,8 @@ const authMiddleware = require("./middleware/authMiddleware");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
 const express = require("express");
+const interviewRoutes = require("./interviewRoutes");
+const resumeRoutes = require("./resumeRoutes");
 const cors = require("cors");
 const app = express();
 app.use(express.json());
@@ -140,6 +142,35 @@ app.get("/profile", authMiddleware, (req, res) => {
       message: "Something went wrong.",
     });
   }
+});
+// Protected resume APIs
+app.use("/api/resume", authMiddleware, resumeRoutes);
+app.use("/api/interview", authMiddleware, interviewRoutes);
+// Handle upload and other middleware errors
+app.use((err, req, res, next) => {
+  console.error("API error:", err.message);
+
+  if (err instanceof require("multer").MulterError) {
+    return res.status(400).json({
+      success: false,
+      message:
+        err.code === "LIMIT_FILE_SIZE"
+          ? "Resume must be smaller than 5 MB."
+          : "File upload failed.",
+    });
+  }
+
+  if (err.message === "Only PDF files are allowed.") {
+    return res.status(400).json({
+      success: false,
+      message: err.message,
+    });
+  }
+
+  res.status(500).json({
+    success: false,
+    message: "Internal server error.",
+  });
 });
 app.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`);

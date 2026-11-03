@@ -19,3 +19,8 @@ build/
 
 # Coverage
 coverage/
+
+# SQLite databases
+*.db
+*.sqlite
+*.sqlite3
