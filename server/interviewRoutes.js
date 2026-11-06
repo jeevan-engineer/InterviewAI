@@ -1,5 +1,6 @@
 const getQuestions = require("./questionBank");
 const express = require("express");
+const { evaluateAnswer } = require("./evaluator");
 const { GoogleGenAI } = require("@google/genai");
 const db = require("./database");
 
@@ -12,32 +13,64 @@ const ai = new GoogleGenAI({
 const sleep = (ms) =>
   new Promise((resolve) => setTimeout(resolve, ms));
 
+const GEMINI_MODELS = (
+  process.env.GEMINI_MODELS ||
+  "gemini-3.1-flash-lite,gemini-flash-lite-latest,gemini-3.5-flash-lite"
+)
+  .split(",")
+  .map((m) => m.trim())
+  .filter(Boolean);
+
+const withTimeout = (promise, ms) =>
+  Promise.race([
+    promise,
+    new Promise((_, reject) =>
+      setTimeout(
+        () =>
+          reject(
+            Object.assign(new Error("Gemini request timed out"), {
+              status: 408,
+            })
+          ),
+        ms
+      )
+    ),
+  ]);
+
 async function generateWithRetry(prompt) {
-  const maxAttempts = 3;
+  const deadline = Date.now() + 25000;
+  let lastError;
 
-  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+  for (const model of GEMINI_MODELS) {
+    const remaining = deadline - Date.now();
+    if (remaining < 3000) break;
+
     try {
-      return await ai.models.generateContent({
-        model: "gemini-3.8-flash",
-        contents: prompt,
-        config: {
-          responseMimeType: "application/json",
-          temperature: 0.7,
-        },
-      });
+      const response = await withTimeout(
+        ai.models.generateContent({
+          model,
+          contents: prompt,
+          config: {
+            responseMimeType: "application/json",
+            temperature: 0.7,
+          },
+        }),
+        Math.min(8000, remaining)
+      );
+      console.log("Gemini model used:", model);
+      return response;
     } catch (error) {
-      const status = error.status;
+      lastError = error;
+      console.log(`Gemini ${model} failed (${error.status || error.message})`);
 
-      if (![429, 500, 503, 504].includes(status) ||
-          attempt === maxAttempts) {
+      // Stop completely on errors like a bad key
+      if (![400, 404, 408, 429, 500, 503, 504].includes(error.status)) {
         throw error;
       }
-
-      console.log(`Gemini unavailable. Retry ${attempt}/${maxAttempts}`);
-
-      await sleep(1000 * Math.pow(2, attempt - 1));
     }
   }
+
+  throw lastError || new Error("Gemini unavailable");
 }
 
 // Generate a new interview
@@ -242,5 +275,135 @@ router.post("/:id/answer", (req, res) => {
     });
   }
 });
+// Evaluate several answers with ONE Gemini call
+async function evaluateWithGemini(questions, pending) {
+  const items = pending.map((p) => ({
+    index: p.question_index,
+    category: questions[p.question_index]?.category,
+    question: questions[p.question_index]?.question,
+    answer: p.answer,
+  }));
 
+  const prompt = `You are a strict but encouraging technical interviewer. Evaluate each candidate answer below.
+For each item return an integer score from 0 to 10 and short, specific feedback (max 2 sentences) saying what was good and what to improve.
+Return ONLY a JSON array like [{"index": 0, "score": 7, "feedback": "..."}] with one object per item.
+
+${JSON.stringify(items)}`;
+
+  const response = await generateWithRetry(prompt);
+  const parsed = JSON.parse(response.text);
+
+  const results = {};
+  for (const r of parsed) {
+    if (
+      Number.isInteger(r.index) &&
+      Number.isFinite(r.score) &&
+      typeof r.feedback === "string"
+    ) {
+      results[r.index] = {
+        score: Math.max(0, Math.min(10, Math.round(r.score))),
+        feedback: r.feedback.trim(),
+      };
+    }
+  }
+  return results;
+}
+// Evaluate all saved answers of an interview
+router.post("/:id/evaluate", async (req, res) => {
+  try {
+    const interviewId = Number(req.params.id);
+
+    if (!Number.isInteger(interviewId) || interviewId <= 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid interview ID.",
+      });
+    }
+
+    const interview = db.prepare(`
+      SELECT id, questions
+      FROM interviews
+      WHERE id = ? AND user_id = ?
+    `).get(interviewId, req.user.id);
+
+    if (!interview) {
+      return res.status(404).json({
+        success: false,
+        message: "Interview not found.",
+      });
+    }
+
+    const questions = JSON.parse(interview.questions);
+
+    // Only answers that have not been scored yet
+    const pending = db.prepare(`
+      SELECT question_index, answer
+      FROM interview_answers
+      WHERE interview_id = ? AND user_id = ? AND score IS NULL
+    `).all(interviewId, req.user.id);
+
+    let source = "cached";
+
+    if (pending.length > 0) {
+      let results = {};
+      source = "gemini";
+
+      try {
+        results = await evaluateWithGemini(questions, pending);
+      } catch (err) {
+        console.log("Gemini evaluation failed, using fallback:", err.message);
+      console.log("Cause:", err.cause?.code || err.cause?.message || err.cause);
+        source = "fallback";
+      }
+
+      const updateStmt = db.prepare(`
+        UPDATE interview_answers
+        SET score = ?, feedback = ?
+        WHERE interview_id = ? AND user_id = ? AND question_index = ?
+      `);
+
+      for (const item of pending) {
+        const result =
+          results[item.question_index] ||
+          evaluateAnswer(questions[item.question_index], item.answer);
+
+        updateStmt.run(
+          result.score,
+          result.feedback,
+          interviewId,
+          req.user.id,
+          item.question_index
+        );
+      }
+    }
+
+    console.log("Evaluation source:", source);
+
+    const row = db.prepare(`
+      SELECT COALESCE(SUM(score), 0) AS total
+      FROM interview_answers
+      WHERE interview_id = ? AND user_id = ?
+    `).get(interviewId, req.user.id);
+
+    db.prepare(`
+      UPDATE interviews SET status = 'completed'
+      WHERE id = ? AND user_id = ?
+    `).run(interviewId, req.user.id);
+
+    return res.json({
+      success: true,
+      totalScore: row.total,
+      maxScore: questions.length * 10,
+      source,
+    });
+
+  } catch (error) {
+    console.error("Evaluate interview error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Unable to evaluate interview.",
+    });
+  }
+});
 module.exports = router;

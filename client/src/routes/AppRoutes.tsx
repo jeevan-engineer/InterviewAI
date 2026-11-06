@@ -4,9 +4,10 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Login from "../pages/Login";
 import Register from "../pages/Register";
 import Dashboard from "../pages/Dashboard";
+
 import InterviewSetup from "../pages/InterviewSetup";
 import InterviewRoom from "../pages/InterviewRoom";
-
+import Result from "../pages/Result";
 import MainLayout from "../layouts/MainLayout";
 import ProtectedRoute from "../components/ProtectedRoute";
 
@@ -31,6 +32,7 @@ function AppRoutes() {
               element={<InterviewRoom />}
             />
           </Route>
+          <Route path="/interview/:id/result" element={<Result />} />
         </Route>
       </Routes>
     </BrowserRouter>

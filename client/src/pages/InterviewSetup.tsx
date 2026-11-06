@@ -13,7 +13,7 @@ const InterviewSetup = () => {
 
   const [jobRole, setJobRole] = useState("Full Stack Developer");
   const [experienceLevel, setExperienceLevel] = useState("Fresher");
-  const [difficulty, setDifficulty] = useState("Intermediate");
+  const [difficulty, setDifficulty] = useState("medium");
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -56,7 +56,7 @@ const InterviewSetup = () => {
         throw new Error(data.message || "Failed to generate interview.");
       }
 
-      setQuestions(data.questions);
+      navigate(`/interview/${data.interviewId}`);
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "Something went wrong."
@@ -117,9 +117,9 @@ const InterviewSetup = () => {
             onChange={(e) => setDifficulty(e.target.value)}
             style={{ display: "block", width: "100%", padding: "12px" }}
           >
-            <option>Beginner</option>
-            <option>Intermediate</option>
-            <option>Advanced</option>
+            <option>Easy</option>
+            <option>Medium</option>
+            <option>Hard</option>
           </select>
         </div>
 
@@ -132,30 +132,9 @@ const InterviewSetup = () => {
         <p style={{ color: "red", marginTop: "20px" }}>{error}</p>
       )}
 
-      {questions.length > 0 && (
-        <div style={{ marginTop: "35px" }}>
-          <h2>Your AI-Generated Interview Questions</h2>
-          <p>{questions.length} questions generated successfully.</p>
-
-          {questions.map((item, index) => (
-            <div
-              key={index}
-              style={{
-                padding: "18px",
-                marginBottom: "15px",
-                border: "1px solid #ddd",
-                borderRadius: "10px",
-              }}
-            >
-              <strong>Question {index + 1}</strong>
-              <p>{item.question}</p>
-              <small>{item.category}</small>
-            </div>
-          ))}
+      
         </div>
       )}
-    </div>
-  );
-};
+   
 
 export default InterviewSetup;

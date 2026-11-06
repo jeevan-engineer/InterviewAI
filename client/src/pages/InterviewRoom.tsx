@@ -152,11 +152,10 @@ const InterviewRoom = () => {
   };
 
   const handleFinish = async () => {
-    if (await saveAnswer()) {
-      alert("Your answers have been saved! Evaluation is the next step.");
-      navigate("/dashboard");
-    }
-  };
+  if (await saveAnswer()) {
+    navigate(`/interview/${id}/result`);
+  }
+};
 
   if (loading) return <p>Loading interview...</p>;
 
