@@ -75,7 +75,7 @@ const Result = () => {
   const answered = answers.filter((a) => a.answer && a.answer.trim()).length;
   const totalScore = answers.reduce((sum, a) => sum + (a.score ?? 0), 0);
   return (
-    <div style={{ maxWidth: "850px", margin: "40px auto", padding: "20px" }}>
+    <div>
       <h1>Interview Summary</h1>
       {meta && (
         <p>
@@ -98,8 +98,10 @@ const Result = () => {
             style={{
               padding: "18px",
               marginBottom: "15px",
-              border: "1px solid #ddd",
-              borderRadius: "10px",
+              background: "white",
+              border: "1px solid #e2e8f0",
+              borderRadius: "14px",
+              boxShadow: "0 1px 3px rgba(0,0,0,0.06)",
             }}
           >
             <strong>Question {index + 1}</strong>

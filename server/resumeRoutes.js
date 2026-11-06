@@ -108,7 +108,9 @@ Required JSON structure:
     }
   ],
   "strengths": ["strength1"],
-  "improvementAreas": ["area1"]
+  "improvementAreas": ["area1"],
+  "atsScore": 0,
+  "atsIssues": ["issue1"]
 }
 
 Important:
@@ -116,6 +118,10 @@ Important:
 - Distinguish professional experience from academic projects.
 - Do not count project duration as employment experience.
 - Estimate experience only from explicit evidence.
+- strengths: 3 to 5 specific good things about this resume.
+- improvementAreas: 3 to 5 specific weaknesses or things to fix.
+- atsScore: an integer from 0 to 100 estimating how well an applicant tracking system would parse and rank this resume. Score it as the sum of: standard sections present (contact, summary, education, skills, projects or experience) up to 20; relevant technical keywords and skills up to 30; quantified achievements and strong action verbs up to 20; clear, concise, consistent writing and sensible length up to 15; complete contact details up to 15. Be honest and do not inflate the score.
+- atsIssues: up to 5 concrete fixes that would improve the ATS score.
 - Keep the response concise and factual.
 
 RESUME CONTENT:
@@ -135,7 +141,10 @@ ${resumeContent}
     }
 
     const parsedProfile = JSON.parse(responseText);
-
+        const rawScore = Number(parsedProfile.atsScore);
+    parsedProfile.atsScore = Number.isFinite(rawScore)
+      ? Math.max(0, Math.min(100, Math.round(rawScore)))
+      : null;
     // 3. Save resume in SQLite
     const result = db.prepare(`
       INSERT INTO resumes (

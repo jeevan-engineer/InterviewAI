@@ -1,40 +1,25 @@
-import { Link } from "react-router-dom";
+import { Link, NavLink, useNavigate } from "react-router-dom";
 
 function Navbar() {
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    navigate("/", { replace: true });
+  };
+
   return (
-    <nav
-      style={{
-        display: "flex",
-        justifyContent: "space-between",
-        alignItems: "center",
-        padding: "16px 32px",
-        backgroundColor: "#1e293b",
-        color: "white",
-      }}
-    >
-      <h2>InterviewAI</h2>
+    <nav className="navbar">
+      <Link to="/dashboard" className="brand">
+        🎯 InterviewAI
+      </Link>
 
-      <div style={{ display: "flex", gap: "20px" }}>
-        <Link
-          to="/"
-          style={{ color: "white", textDecoration: "none" }}
-        >
-          Login
-        </Link>
-
-        <Link
-          to="/register"
-          style={{ color: "white", textDecoration: "none" }}
-        >
-          Register
-        </Link>
-
-        <Link
-          to="/dashboard"
-          style={{ color: "white", textDecoration: "none" }}
-        >
-          Dashboard
-        </Link>
+      <div className="nav-links">
+        <NavLink to="/dashboard">Dashboard</NavLink>
+        <NavLink to="/interview-setup">New Interview</NavLink>
+        <button className="btn-ghost" onClick={handleLogout}>
+          Logout
+        </button>
       </div>
     </nav>
   );

@@ -1,47 +1,18 @@
 
-import { useEffect, useState, type ChangeEvent } from "react";
+import { useEffect, useState } from "react";
+import ResumeAnalyzer from "../components/ResumeAnalyzer";
 import { useNavigate } from "react-router-dom";
 import API_BASE_URL from "../api";
 
 const Dashboard = () => {
   const navigate = useNavigate();
 
-  const [message, setMessage] = useState("");
-  const [count, setCount] = useState(0);
+ 
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [resumeStatus, setResumeStatus] = useState("");
+  const [companyInput, setCompanyInput] = useState("");
 
-  // Logout
-  const handleLogout = (): void => {
-    localStorage.removeItem("token");
-    navigate("/", { replace: true });
-  };
-  const handleResumeUpload = async (e: ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    const token = localStorage.getItem("token");
-    const formData = new FormData();
-    formData.append("resume", file);
-
-    setResumeStatus("Uploading and analyzing resume...");
-
-    try {
-      const res = await fetch(`${API_BASE_URL}/api/resume/upload`, {
-        method: "POST",
-        headers: { Authorization: `Bearer ${token}` },
-        body: formData,
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message || "Upload failed.");
-      setResumeStatus(
-        `Resume analyzed. Found ${data.profile?.skills?.length ?? 0} skills.`
-      );
-    } catch (err) {
-      setResumeStatus(err instanceof Error ? err.message : "Upload failed.");
-    }
-  };
+  
   // Fetch logged-in user profile
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -84,61 +55,60 @@ const Dashboard = () => {
       });
   }, [navigate]);
 
-  return (
+    return (
     <div>
-      <h1>Dashboard</h1>
-
-      {loading ? (
-        <p>Loading...</p>
-      ) : (
-        user && (
-          <div>
-            <h2>Welcome, {user.name} 👋</h2>
-            <p>Email: {user.email}</p>
-          </div>
-        )
-      )}
-            <div style={{ marginTop: "20px" }}>
-        <h3>Your Resume (PDF)</h3>
-        <input type="file" accept="application/pdf" onChange={handleResumeUpload} />
-        <p>{resumeStatus}</p>
+      <div className="hero">
+        {loading ? (
+          <h1>Loading...</h1>
+        ) : (
+          <>
+            <h1>Welcome{user ? `, ${user.name}` : ""} 👋</h1>
+            {user && <p className="muted">{user.email}</p>}
+          </>
+        )}
       </div>
-      {/* Start Mock Interview */}
-      <button
-        onClick={() => {
-          console.log("Start Interview button clicked");
-          navigate("/interview-setup");
-        }}
-        style={{
-          padding: "12px 24px",
-          marginTop: "20px",
-          backgroundColor: "#2563eb",
-          color: "white",
-          border: "none",
-          borderRadius: "8px",
-          cursor: "pointer",
-        }}
-      >
-        Start Mock Interview →
-      </button>
 
-      <h2>{message}</h2>
+      <ResumeAnalyzer />
 
-      <h3>Count: {count}</h3>
+      <div className="grid-2">
+        <div className="card">
+          <h2>🏢 Prepare for a Company</h2>
+          <p className="muted">
+            Enter the company you're interviewing with and get practice
+            questions in its style.
+          </p>
+          <div className="row">
+            <input
+              value={companyInput}
+              onChange={(e) => setCompanyInput(e.target.value)}
+              placeholder="e.g. Google, TCS, Zoho"
+              maxLength={60}
+              style={{ flex: 1, minWidth: "180px" }}
+            />
+            <button
+              onClick={() =>
+                navigate("/interview-setup", { state: { company: companyInput } })
+              }
+            >
+              Continue →
+            </button>
+          </div>
+        </div>
 
-      <button onClick={() => setCount(count + 1)}>
-        Increase
-      </button>
-
-      {/* Logout */}
-      <button
-        onClick={handleLogout}
-        style={{ marginLeft: "10px" }}
-      >
-        Logout
-      </button>
+        <div className="card">
+          <h2>🎤 Quick Mock Interview</h2>
+          <p className="muted">
+            Pick a role, level and difficulty, then practise answering one
+            question at a time.
+          </p>
+          <button onClick={() => navigate("/interview-setup")}>
+            Start Mock Interview →
+          </button>
+        </div>
+      </div>
     </div>
   );
+   
 };
 
 export default Dashboard;

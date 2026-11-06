@@ -1,6 +1,6 @@
 import API_BASE_URL from "../api";
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 const REDIRECT_DELAY = 2000;
 
 
@@ -20,7 +20,8 @@ const navigate = useNavigate();
   e: React.FormEvent<HTMLFormElement>
 ): Promise<void> => {
   e.preventDefault();
-
+  setError("");
+  setSuccess("");
 
 // Frontend validation
 if (password !== confirmPassword) {
@@ -69,95 +70,66 @@ setLoading(true);
     setLoading(false);
   }
 };
-  return (
-    
-    <div
-      style={{
-        height: "100vh",
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "center",
-        background: "#f4f4f4",
-      }}
-    >
-      <div
-        style={{
-          background: "white",
-          padding: "2rem",
-          borderRadius: "10px",
-          width: "350px",
-          boxShadow: "0 5px 20px rgba(0,0,0,0.1)",
-        }}
-      >
-        <h1 style={{ textAlign: "center" }}>Create Account</h1>
+    return (
+    <div className="auth-page">
+      <div className="auth-card">
+        <div className="auth-brand">🎯 InterviewAI</div>
+        <p className="muted auth-sub">Create your account</p>
+
         <form onSubmit={handleRegister}>
-        <input
-  type="text"
-  placeholder="Full Name"
-  value={name}
-  onChange={(e) => setName(e.target.value)}
-  style={{
-    width: "100%",
-    padding: "10px",
-    marginTop: "20px",
-    marginBottom: "15px",
-  }}
-/>
+          <div className="field">
+            <label>Full Name</label>
+            <input
+              type="text"
+              placeholder="Your name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+            />
+          </div>
 
-        <input
-  type="email"
-  placeholder="Email"
-  value={email}
-  onChange={(e) => setEmail(e.target.value)}
-  style={{
-    width: "100%",
-    padding: "10px",
-    marginBottom: "15px",
-  }}
-/>
+          <div className="field">
+            <label>Email</label>
+            <input
+              type="email"
+              placeholder="you@example.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+            />
+          </div>
 
-        <input
-  type="password"
-  placeholder="Password"
-  value={password}
-  onChange={(e) => setPassword(e.target.value)}
-  style={{
-    width: "100%",
-    padding: "10px",
-    marginBottom: "15px",
-  }}
-/>
+          <div className="field">
+            <label>Password</label>
+            <input
+              type="password"
+              placeholder="Choose a password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
+          </div>
 
-        <input
-  type="password"
-  placeholder="Confirm Password"
-  value={confirmPassword}
-  onChange={(e) => setConfirmPassword(e.target.value)}
-  style={{
-    width: "100%",
-    padding: "10px",
-    marginBottom: "20px",
-  }}
-/>
-        
-        <button type="submit" disabled={loading}>
-        {loading ? "Registering..." : "Register"}
-        </button>
-{success && (
-  <p style={{ color: "green", marginTop: "15px" }}>
-    {success}
-  </p>
-)}
+          <div className="field">
+            <label>Confirm Password</label>
+            <input
+              type="password"
+              placeholder="Repeat your password"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+            />
+          </div>
 
-{error && (
-  <p style={{ color: "red", marginTop: "15px" }}>
-    {error}
-  </p>
-)}
-         </form>
+          <button type="submit" disabled={loading} style={{ width: "100%" }}>
+            {loading ? "Registering..." : "Register"}
+          </button>
+
+          {success && <p className="success-text">{success}</p>}
+          {error && <p className="error-text">{error}</p>}
+        </form>
+
+        <p className="auth-switch">
+          Already have an account? <Link to="/">Login</Link>
+        </p>
       </div>
     </div>
-
   );
 }
 

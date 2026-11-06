@@ -1,6 +1,6 @@
 import API_BASE_URL from "../api";
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 interface LoginResponse {
   success: boolean;
@@ -59,76 +59,52 @@ const navigate = useNavigate();
   }
 };
 
-  return (
-    <div
-      style={{
-        height: "100vh",
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "center",
-        background: "#f4f4f4",
-      }}
-    >
-      <div
-        style={{
-          background: "white",
-          padding: "2rem",
-          borderRadius: "10px",
-          width: "350px",
-          boxShadow: "0 5px 20px rgba(0,0,0,0.1)",
-        }}
-      >
-        <h1 style={{ textAlign: "center" }}>InterviewAI</h1>
+    return (
+    <div className="auth-page">
+      <div className="auth-card">
+        <div className="auth-brand">🎯 InterviewAI</div>
+        <p className="muted auth-sub">Sign in to continue your interview prep</p>
+
         <form onSubmit={handleLogin}>
-        <input
-  type="email"
-  placeholder="Email"
-  value={email}
-  onChange={(e) => setEmail(e.target.value)}
-  style={{
-    width: "100%",
-    padding: "10px",
-    marginTop: "20px",
-    marginBottom: "15px",
-  }}
-/>
+          <div className="field">
+            <label>Email</label>
+            <input
+              type="email"
+              placeholder="you@example.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+            />
+          </div>
 
-<input
-  type={showPassword ? "text" : "password"}
-  placeholder="Password"
-  value={password}
-  onChange={(e) => setPassword(e.target.value)}
-  style={{
-    width: "100%",
-    padding: "10px",
-    marginBottom: "20px",
-  }}
-/>
-<button
-  type="button"
-  onClick={() => setShowPassword(!showPassword)}
->
-  {showPassword ? "Hide" : "Show"}
-</button>
+          <div className="field">
+            <label>Password</label>
+            <input
+              type={showPassword ? "text" : "password"}
+              placeholder="Your password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
+          </div>
 
-        <button
-  type="submit"
-  disabled={loading}
-  style={{
-    width: "100%",
-    padding: "10px",
-    cursor: loading ? "not-allowed" : "pointer",
-  }}
->
-  {loading ? "Logging in..." : "Login"}
-</button>
-{error && (
-  <p style={{ color: "red", marginTop: "15px" }}>
-    {error}
-  </p>
-)}
-         
-</form>
+          <label className="checkbox-label field">
+            <input
+              type="checkbox"
+              checked={showPassword}
+              onChange={(e) => setShowPassword(e.target.checked)}
+            />
+            Show password
+          </label>
+
+          <button type="submit" disabled={loading} style={{ width: "100%" }}>
+            {loading ? "Logging in..." : "Login"}
+          </button>
+
+          {error && <p className="error-text">{error}</p>}
+        </form>
+
+        <p className="auth-switch">
+          New here? <Link to="/register">Create an account</Link>
+        </p>
       </div>
     </div>
   );

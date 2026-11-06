@@ -5,7 +5,7 @@ function MainLayout() {
   return (
     <>
       <Navbar />
-      <main style={{ padding: "20px" }}>
+            <main className="page">
         <Outlet />
       </main>
     </>

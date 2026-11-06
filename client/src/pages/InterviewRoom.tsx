@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import API_BASE_URL from "../api";
@@ -152,15 +151,15 @@ const InterviewRoom = () => {
   };
 
   const handleFinish = async () => {
-  if (await saveAnswer()) {
-    navigate(`/interview/${id}/result`);
-  }
-};
+    if (await saveAnswer()) {
+      navigate(`/interview/${id}/result`);
+    }
+  };
 
   if (loading) return <p>Loading interview...</p>;
 
   if (error && !interview) {
-    return <p style={{ color: "red" }}>{error}</p>;
+    return <p className="error-text">{error}</p>;
   }
 
   if (!interview) return <p>Interview not found.</p>;
@@ -169,79 +168,52 @@ const InterviewRoom = () => {
   const progress = ((currentIndex + 1) / interview.questions.length) * 100;
 
   return (
-    <div style={{ maxWidth: "850px", margin: "40px auto", padding: "20px" }}>
-      <button onClick={() => navigate("/dashboard")}>
+    <div style={{ maxWidth: "800px", margin: "0 auto" }}>
+      <button
+        className="btn-secondary"
+        style={{ marginBottom: "16px" }}
+        onClick={() => navigate("/dashboard")}
+      >
         ← Exit Interview
       </button>
 
       <h1>Mock Interview</h1>
-      <p>{interview.job_role}</p>
+      <p className="muted">{interview.job_role}</p>
 
-      <div style={{ marginTop: "25px" }}>
+      <div style={{ marginTop: "20px" }}>
         <div style={{ display: "flex", justifyContent: "space-between" }}>
           <strong>
             Question {currentIndex + 1} of {interview.questions.length}
           </strong>
-          <span>{Math.round(progress)}% completed</span>
+          <span className="muted">{Math.round(progress)}% completed</span>
         </div>
-
-        <div
-          style={{
-            height: "8px",
-            background: "#e5e7eb",
-            borderRadius: "10px",
-            marginTop: "10px",
-          }}
-        >
-          <div
-            style={{
-              width: `${progress}%`,
-              height: "100%",
-              background: "#16a34a",
-              borderRadius: "10px",
-            }}
-          />
+        <div className="progress-track">
+          <div className="progress-fill" style={{ width: `${progress}%` }} />
         </div>
       </div>
 
-      <div
-        style={{
-          padding: "25px",
-          marginTop: "30px",
-          border: "1px solid #ddd",
-          borderRadius: "12px",
-        }}
-      >
-        <small>{question.category}</small>
-        <h2>{question.question}</h2>
+      <div className="card" style={{ marginTop: "24px" }}>
+        <span className="tag">{question.category}</span>
+        <h2 style={{ fontSize: "1.4rem", marginBottom: "16px" }}>
+          {question.question}
+        </h2>
 
         <textarea
           value={answer}
           onChange={(e) => setAnswer(e.target.value)}
           placeholder="Write your answer here..."
           rows={9}
-          style={{
-            width: "100%",
-            padding: "15px",
-            marginTop: "20px",
-            boxSizing: "border-box",
-            borderRadius: "8px",
-            resize: "vertical",
-          }}
         />
+        <small>
+          {answer.trim().split(/\s+/).filter(Boolean).length} words. Aim for 50 to 100.
+        </small>
       </div>
 
-      {error && <p style={{ color: "red" }}>{error}</p>}
+      {error && <p className="error-text">{error}</p>}
 
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          marginTop: "25px",
-          gap: "12px",
-        }}
-      >
+      <div className="room-nav">
         <button
+          className="btn-secondary"
           onClick={handlePrevious}
           disabled={currentIndex === 0 || saving}
         >

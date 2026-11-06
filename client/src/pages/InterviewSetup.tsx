@@ -1,6 +1,6 @@
 
 import { useState, type FormEvent } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import API_BASE_URL from "../api";
 
 interface Question {
@@ -10,6 +10,7 @@ interface Question {
 
 const InterviewSetup = () => {
   const navigate = useNavigate();
+    const location = useLocation();
 
   const [jobRole, setJobRole] = useState("Full Stack Developer");
   const [experienceLevel, setExperienceLevel] = useState("Fresher");
@@ -19,6 +20,9 @@ const InterviewSetup = () => {
   const [error, setError] = useState("");
   const [questions, setQuestions] = useState<Question[]>([]);
   const [useResume, setUseResume] = useState(false);
+  const [company, setCompany] = useState(
+    (location.state as { company?: string } | null)?.company ?? ""
+  );
 
   const handleGenerate = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -48,6 +52,7 @@ const InterviewSetup = () => {
             experienceLevel,
             difficulty,
             useResume,
+            company,
           }),
         }
       );
@@ -58,6 +63,9 @@ const InterviewSetup = () => {
         throw new Error(data.message || "Failed to generate interview.");
       }
 
+            if ((company.trim() || useResume) && data.source === "local-question-bank") {
+        alert("Gemini was busy, so general practice questions were used instead.");
+      }
       navigate(`/interview/${data.interviewId}`);
     } catch (err) {
       setError(
@@ -69,8 +77,8 @@ const InterviewSetup = () => {
   };
 
   return (
-    <div style={{ maxWidth: "850px", margin: "40px auto", padding: "20px" }}>
-      <button onClick={() => navigate("/dashboard")}>
+        <div className="card" style={{ maxWidth: "760px", margin: "0 auto" }}>
+            <button className="btn-secondary" onClick={() => navigate("/dashboard")}>
         ← Back to Dashboard
       </button>
 
@@ -124,7 +132,40 @@ const InterviewSetup = () => {
             <option>Hard</option>
           </select>
         </div>
-                <div style={{ marginBottom: "20px" }}>
+        <div style={{ marginBottom: "20px" }}>
+          <label>
+                    <div style={{ marginBottom: "20px" }}>
+          <label>Target Company (optional)</label>
+          <input
+            list="company-list"
+            value={company}
+            onChange={(e) => setCompany(e.target.value)}
+            placeholder="e.g. Google, TCS, Zoho or any company"
+            maxLength={60}
+            style={{ display: "block", width: "100%", padding: "12px" }}
+          />
+          <datalist id="company-list">
+            <option value="Google" />
+            <option value="Microsoft" />
+            <option value="Amazon" />
+            <option value="TCS" />
+            <option value="Infosys" />
+            <option value="Wipro" />
+            <option value="Accenture" />
+            <option value="Cognizant" />
+            <option value="Capgemini" />
+            <option value="Flipkart" />
+            <option value="Zoho" />
+          </datalist>
+          <small>
+            Questions are AI-generated practice questions in the style the company is
+            known for, not real leaked questions.
+          </small>
+        </div>
+            
+          </label>
+        </div>
+        <div style={{ marginBottom: "20px" }}>
           <label>
             <input
               type="checkbox"
