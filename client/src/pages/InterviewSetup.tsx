@@ -18,6 +18,7 @@ const InterviewSetup = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [questions, setQuestions] = useState<Question[]>([]);
+  const [useResume, setUseResume] = useState(false);
 
   const handleGenerate = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -46,6 +47,7 @@ const InterviewSetup = () => {
             jobRole,
             experienceLevel,
             difficulty,
+            useResume,
           }),
         }
       );
@@ -122,7 +124,16 @@ const InterviewSetup = () => {
             <option>Hard</option>
           </select>
         </div>
-
+                <div style={{ marginBottom: "20px" }}>
+          <label>
+            <input
+              type="checkbox"
+              checked={useResume}
+              onChange={(e) => setUseResume(e.target.checked)}
+            />{" "}
+            Base questions on my resume
+          </label>
+        </div>
         <button type="submit" disabled={loading}>
           {loading ? "Generating Questions..." : "Generate Interview"}
         </button>

@@ -1,5 +1,5 @@
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ChangeEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import API_BASE_URL from "../api";
 
@@ -10,13 +10,38 @@ const Dashboard = () => {
   const [count, setCount] = useState(0);
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [resumeStatus, setResumeStatus] = useState("");
 
   // Logout
   const handleLogout = (): void => {
     localStorage.removeItem("token");
     navigate("/", { replace: true });
   };
+  const handleResumeUpload = async (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
 
+    const token = localStorage.getItem("token");
+    const formData = new FormData();
+    formData.append("resume", file);
+
+    setResumeStatus("Uploading and analyzing resume...");
+
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/resume/upload`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+        body: formData,
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || "Upload failed.");
+      setResumeStatus(
+        `Resume analyzed. Found ${data.profile?.skills?.length ?? 0} skills.`
+      );
+    } catch (err) {
+      setResumeStatus(err instanceof Error ? err.message : "Upload failed.");
+    }
+  };
   // Fetch logged-in user profile
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -73,7 +98,11 @@ const Dashboard = () => {
           </div>
         )
       )}
-
+            <div style={{ marginTop: "20px" }}>
+        <h3>Your Resume (PDF)</h3>
+        <input type="file" accept="application/pdf" onChange={handleResumeUpload} />
+        <p>{resumeStatus}</p>
+      </div>
       {/* Start Mock Interview */}
       <button
         onClick={() => {

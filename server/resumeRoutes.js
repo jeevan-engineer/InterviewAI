@@ -2,7 +2,7 @@
 const express = require("express");
 const multer = require("multer");
 const { PDFParse } = require("pdf-parse");
-const { GoogleGenAI } = require("@google/genai");
+const { generateWithRetry } = require("./gemini");
 const db = require("./database");
 
 const router = express.Router();
@@ -21,9 +21,7 @@ const upload = multer({
   },
 });
 
-const ai = new GoogleGenAI({
-  apiKey: process.env.GEMINI_API_KEY,
-});
+   
 
 // POST /api/resume/upload
 router.post("/upload", upload.single("resume"), async (req, res) => {
@@ -124,13 +122,10 @@ RESUME CONTENT:
 ${resumeContent}
 `;
 
-    const response = await ai.models.generateContent({
-      model: "gemini-flash-latest",
-      contents: prompt,
-      config: {
-        responseMimeType: "application/json",
-        temperature: 0.2,
-      },
+        const response = await generateWithRetry(prompt, {
+      temperature: 0.2,
+      totalMs: 40000,
+      perModelMs: 15000,
     });
 
     const responseText = response.text;
