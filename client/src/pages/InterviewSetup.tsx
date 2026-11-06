@@ -18,7 +18,7 @@ const InterviewSetup = () => {
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [questions, setQuestions] = useState<Question[]>([]);
+  const [,setQuestions] = useState<Question[]>([]);
   const [useResume, setUseResume] = useState(false);
   const [company, setCompany] = useState(
     (location.state as { company?: string } | null)?.company ?? ""
