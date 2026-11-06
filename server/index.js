@@ -10,6 +10,33 @@ const resumeRoutes = require("./resumeRoutes");
 const cors = require("cors");
 const app = express();
 app.use(express.json());
+const rateLimit = require("express-rate-limit");
+
+app.set("trust proxy", 1); // Render sits behind a proxy
+
+// Only the Gemini-calling routes are limited: generate, evaluate, resume upload
+const aiLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 10, // 10 AI actions per user per hour
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req) => String(req.user?.id ?? "anon"),
+  skip: (req) =>
+    !(
+      req.method === "POST" &&
+      (req.path === "/generate" ||
+        req.path === "/upload" ||
+        /\/evaluate$/.test(req.path))
+    ),
+  message: { message: "Rate limit reached. Please try again later." },
+});
+const registerLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 5, // 5 signups per IP per hour
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { success: false, message: "Too many signups. Try again later." },
+});
 const allowedOrigins = (process.env.CORS_ORIGINS || "http://localhost:5173")
   .split(",")
   .map((o) => o.trim());
@@ -32,7 +59,7 @@ app.get("/api/message", (req, res) => {
     message: "Hello from the InterviewAI Backend!"
   });
 });
-app.post("/register", async (req, res) => {
+app.post("/register", registerLimiter, async (req, res) => {
   const { name, email, password } = req.body;
 
   // Validation
@@ -156,8 +183,8 @@ app.get("/profile", authMiddleware, async (req, res) => {
   }
 });
 // Protected resume APIs
-app.use("/api/resume", authMiddleware, resumeRoutes);
-app.use("/api/interview", authMiddleware, interviewRoutes);
+app.use("/api/resume", authMiddleware, aiLimiter, resumeRoutes);
+app.use("/api/interview", authMiddleware, aiLimiter, interviewRoutes);
 // Handle upload and other middleware errors
 app.use((err, req, res, next) => {
   console.error("API error:", err.message);
@@ -194,3 +221,4 @@ db.ready
     console.error("Database setup failed:", err);
     process.exit(1);
   });
+
