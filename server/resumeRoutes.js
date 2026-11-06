@@ -146,7 +146,7 @@ ${resumeContent}
       ? Math.max(0, Math.min(100, Math.round(rawScore)))
       : null;
     // 3. Save resume in SQLite
-    const result = db.prepare(`
+    const result = await db.prepare(`
       INSERT INTO resumes (
         user_id,
         filename,
@@ -187,9 +187,9 @@ ${resumeContent}
 });
 
 // GET /api/resume/latest
-router.get("/latest", (req, res) => {
+router.get("/latest", async (req, res) => {
   try {
-    const resume = db.prepare(`
+    const resume = await db.prepare(`
       SELECT id, filename, file_size, parsed_profile, created_at
       FROM resumes
       WHERE user_id = ?

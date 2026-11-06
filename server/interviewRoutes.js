@@ -94,7 +94,7 @@ router.post("/generate", async (req, res) => {
     let profile = null;
 
     if (useResume) {
-      const resume = db.prepare(`
+      const resume = await db.prepare(`
         SELECT parsed_profile
         FROM resumes
         WHERE user_id = ?
@@ -149,7 +149,7 @@ router.post("/generate", async (req, res) => {
       VALUES (?, ?, ?, ?, ?)
     `);
 
-    const savedInterview = insertInterview.run(
+    const savedInterview = await insertInterview.run(
       req.user.id,
       jobRole,
       experienceLevel,
@@ -177,7 +177,7 @@ router.post("/generate", async (req, res) => {
 
 
 // Get a specific interview session
-router.get("/:id", (req, res) => {
+router.get("/:id", async (req, res) => {
   try {
     const interviewId = Number(req.params.id);
 
@@ -188,7 +188,7 @@ router.get("/:id", (req, res) => {
       });
     }
 
-    const interview = db.prepare(`
+    const interview = await db.prepare(`
       SELECT id, job_role, experience_level, difficulty,
              questions, status, created_at
       FROM interviews
@@ -202,7 +202,7 @@ router.get("/:id", (req, res) => {
       });
     }
 
-    const answers = db.prepare(`
+    const answers = await db.prepare(`
       SELECT question_index, answer, feedback, score
       FROM interview_answers
       WHERE interview_id = ? AND user_id = ?
@@ -230,7 +230,7 @@ router.get("/:id", (req, res) => {
 
 
 // Submit an answer to an interview question
-router.post("/:id/answer", (req, res) => {
+router.post("/:id/answer", async (req, res) => {
   try {
     const interviewId = Number(req.params.id);
     const { questionIndex, answer } = req.body;
@@ -255,7 +255,7 @@ router.post("/:id/answer", (req, res) => {
       });
     }
 
-    const interview = db.prepare(`
+    const interview = await db.prepare(`
       SELECT id, questions
       FROM interviews
       WHERE id = ? AND user_id = ?
@@ -280,7 +280,7 @@ router.post("/:id/answer", (req, res) => {
       });
     }
 
-    db.prepare(`
+    await db.prepare(`
       INSERT INTO interview_answers (
         interview_id,
         user_id,
@@ -362,7 +362,7 @@ router.post("/:id/evaluate", async (req, res) => {
       });
     }
 
-    const interview = db.prepare(`
+    const interview = await db.prepare(`
       SELECT id, questions
       FROM interviews
       WHERE id = ? AND user_id = ?
@@ -378,7 +378,7 @@ router.post("/:id/evaluate", async (req, res) => {
     const questions = JSON.parse(interview.questions);
 
     // Only answers that have not been scored yet
-    const pending = db.prepare(`
+  const pending = await db.prepare(`
       SELECT question_index, answer
       FROM interview_answers
       WHERE interview_id = ? AND user_id = ? AND score IS NULL
@@ -409,7 +409,7 @@ router.post("/:id/evaluate", async (req, res) => {
           results[item.question_index] ||
           evaluateAnswer(questions[item.question_index], item.answer);
 
-        updateStmt.run(
+        await updateStmt.run(
           result.score,
           result.feedback,
           interviewId,
@@ -421,13 +421,13 @@ router.post("/:id/evaluate", async (req, res) => {
 
     console.log("Evaluation source:", source);
 
-    const row = db.prepare(`
+    const row = await db.prepare(`
       SELECT COALESCE(SUM(score), 0) AS total
       FROM interview_answers
       WHERE interview_id = ? AND user_id = ?
     `).get(interviewId, req.user.id);
 
-    db.prepare(`
+    await db.prepare(`
       UPDATE interviews SET status = 'completed'
       WHERE id = ? AND user_id = ?
     `).run(interviewId, req.user.id);

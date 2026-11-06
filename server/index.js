@@ -10,11 +10,21 @@ const resumeRoutes = require("./resumeRoutes");
 const cors = require("cors");
 const app = express();
 app.use(express.json());
-app.use(cors());
-const PORT = 8000;
+const allowedOrigins = (process.env.CORS_ORIGINS || "http://localhost:5173")
+  .split(",")
+  .map((o) => o.trim());
+app.use(cors({ origin: allowedOrigins }));
+const PORT = process.env.PORT || 8000;
 const JWT_SECRET = process.env.JWT_SECRET;
+if (!JWT_SECRET) {
+  console.error("JWT_SECRET is not set.");
+  process.exit(1);
+}
 app.get("/", (req, res) => {
   res.send("Welcome to InterviewAI Backend!");
+});
+app.get("/health", (req, res) => {
+  res.json({ status: "ok" });
 });
 app.get("/api/message", (req, res) => {
   res.json({
@@ -22,7 +32,7 @@ app.get("/api/message", (req, res) => {
     message: "Hello from the InterviewAI Backend!"
   });
 });
-app.post("/register", (req, res) => {
+app.post("/register", async (req, res) => {
   const { name, email, password } = req.body;
 
   // Validation
@@ -41,14 +51,16 @@ app.post("/register", (req, res) => {
 
     const hashedPassword = bcrypt.hashSync(password, 10);
 
-    insertUser.run(name, email, hashedPassword);
-
+    await insertUser.run(name, email, hashedPassword);
     res.status(201).json({
       success: true,
       message: "User registered successfully.",
     });
   } catch (error) {
-    if (error.code === "SQLITE_CONSTRAINT_UNIQUE") {
+        if (
+      String(error.code).startsWith("SQLITE_CONSTRAINT") ||
+      /UNIQUE/i.test(error.message)
+    ) {
       return res.status(409).json({
         success: false,
         message: "Email is already registered.",
@@ -64,7 +76,7 @@ app.post("/register", (req, res) => {
   }
 });
 
-app.post("/login", (req, res) => {
+app.post("/login", async(req, res) => {
   const { email, password } = req.body;
 
   // Check if both fields are provided
@@ -77,7 +89,7 @@ app.post("/login", (req, res) => {
 
   try {
     // Find user by email
-    const user = db
+    const user = await db
       .prepare("SELECT * FROM users WHERE email = ?")
       .get(email);
 
@@ -116,9 +128,9 @@ app.post("/login", (req, res) => {
     });
   }
 });
-app.get("/profile", authMiddleware, (req, res) => {
+app.get("/profile", authMiddleware, async (req, res) => {
   try {
-    const user = db
+    const user = await db
       .prepare("SELECT id, name, email, created_at FROM users WHERE id = ?")
       .get(req.user.id);
 
@@ -172,6 +184,13 @@ app.use((err, req, res, next) => {
     message: "Internal server error.",
   });
 });
-app.listen(PORT, () => {
-  console.log(`Server is running on http://localhost:${PORT}`);
-});
+db.ready
+  .then(() => {
+    app.listen(PORT, () => {
+      console.log(`Server is running on port ${PORT}`);
+    });
+  })
+  .catch((err) => {
+    console.error("Database setup failed:", err);
+    process.exit(1);
+  });
